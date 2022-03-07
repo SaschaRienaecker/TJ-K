@@ -32,3 +32,23 @@ def read_rad_prof(rad_position, probe_nr):
         data_nan=~np.isnan(data_array)
         data_array=data_array[data_nan]
         return(data_array)
+
+def extract_to_binary(shot='radial'):
+
+    if shot=='radial':
+        Np = 3    # number of probes
+        NR = 13   # number or radii
+
+
+        for ip in np.arange(Np):
+            for iR in np.arange(NR):
+
+                dat = read_rad_prof(iR,ip)
+
+                if ip==0 and iR==0:
+                    Dat = np.zeros((Np, NR, dat.size)) # placeholder
+
+                Dat[ip, iR] = dat
+
+        p_binary = datap / '20100216#006709/dat.npy'
+        np.save(p_binary, Dat)
