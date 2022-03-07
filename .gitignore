@@ -1,0 +1,28 @@
+overleaf
+data
+literature
+
+*.pdf
+
+# ignore data files
+*.npy
+*.pkl
+
+*.pyc
+.ipynb_checkpoints/
+
+
+# ignore what latex produces
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.out
+*.xml
+*.toc
+*.nav
+*.snm
+*.gz
+*.fdb_latexmk
+*.fls
