@@ -33,6 +33,27 @@ def read_rad_prof(rad_position, probe_nr):
         data_array=data_array[data_nan]
         return(data_array)
 
+def read_pol_prof(tor_pos, probe_nr):
+    """
+    tor_pos : index of toroidal position. Must be 0 or 1.
+    probe_nr: index of the poloidal probe Must be between 0 and 63
+    """
+    ext = ".ufl" if probe_nr%2==0 else '.isa'
+
+    path = datap / "20100920#007192/TJ-K20100920#007192pos000{:d}_{:02d}{}".format(tor_pos,probe_nr,ext)
+
+    #Load measurements in a panda dataframe.
+    data_pandas=pd.read_csv(path,skiprows=20,engine='python',header=None,delim_whitespace=True,skipfooter=2)
+    #Convert it to numpy array
+    data_array = data_pandas.values
+    #Reshape it from (174763, 6) to  (1048576)
+    data_array=np.reshape(data_array,[np.shape(data_array)[0]*np.shape(data_array)[1]])
+    #Remove nans (they come from number of values in each data columns:not the same length)
+    data_nan=~np.isnan(data_array)
+    data_array=data_array[data_nan]
+    return(data_array)
+
+
 def extract_to_binary(shot='radial'):
 
     if shot=='radial':
@@ -52,3 +73,30 @@ def extract_to_binary(shot='radial'):
 
         p_binary = datap / '20100216#006709/dat.npy'
         np.save(p_binary, Dat)
+
+    elif shot=='poloidal':
+
+        Np = 64
+        Nt = 2
+
+        for ip in np.arange(Np):
+            for it in np.arange(Nt):
+
+                dat = read_pol_prof(it,ip)
+
+                if ip==0 and it==0:
+                    Dat = np.zeros((Np, Nt, dat.size)) # placeholder
+
+                Dat[ip, it] = dat
+
+
+        p_binary = datap / '20100920#007192/dat.npy'
+        np.save(p_binary, Dat)
+
+def load_binary(shot='radial'):
+    if shot=='radial':
+        p_binary = datap / '20100920#007192/dat.npy'
+    elif shot=='poloidal':
+        p_binary = datap / '20100216#006709/dat.npy'
+    Dat = np.load(p_binary)
+    return Dat
