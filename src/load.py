@@ -2,6 +2,8 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import scipy.stats as scstats
+import scipy.signal as scsignal
 
 datap = Path('../data')
 
@@ -52,3 +54,53 @@ def extract_to_binary(shot='radial'):
 
         p_binary = datap / '20100216#006709/dat.npy'
         np.save(p_binary, Dat)
+    elif shot == 'poloidal':
+        Np = 64    # number of probes
+        NR = 2   # number or radii
+
+
+        for ip in np.arange(Np):
+            for iR in np.arange(NR):
+
+                dat = read_rad_prof(iR,ip)
+
+                if ip==0 and iR==0:
+                    Dat = np.zeros((Np, NR, dat.size)) # placeholder
+
+                Dat[ip, iR] = dat
+
+        p_binary = datap / '20100920#007192/dat.npy'
+        np.save(p_binary, Dat)
+
+def statistical_properties(array):
+    mean_array = np.mean(array)
+    kurtosis_array = scstats.kurtosis(array)
+    skew_array = scstats.skew(array)
+    autocorr_array = scsignal.correlate(array, array)
+    
+    return mean_array, kurtosis_array, skew_array, autocorr_array
+
+# def correlation_properties()
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
