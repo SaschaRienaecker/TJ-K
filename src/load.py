@@ -34,6 +34,35 @@ def read_rad_prof(rad_position, probe_nr):
         data_nan=~np.isnan(data_array)
         data_array=data_array[data_nan]
         return(data_array)
+    
+def read_pol_prof(pol_position, probe_nr):
+    """
+    pol_position : index for the poloidal position of the probe. Must be an integer between  0 and 1.
+    probe_nr: index of the probe in the probe setup. Must be an integer between 0 and 63.
+    """
+    if probe_nr//2 == probe_nr/2:
+        ext = ".ufl"
+    else:
+        ext = ".isa"
+    if probe_nr%64 != probe_nr :
+        print("Probe number must be between 0 and 63 depending on the probe we use : even nb are measuring potential and odd nb are measuring ion saturation current.")
+        ext = 'NaN'
+
+    if ext != 'NaN':
+        # path= datap / str("20100216#006709/TJ-K20100216#006709pos00"+"%02d" % (rad_position,)+"_0"+str(probe_nr)+ext )
+        path = datap / "20100920#007192/TJ-K20100920#007192pos00{:02d}_{:02d}{}".format(pol_position,probe_nr,ext)
+
+        #Load measurements in a panda dataframe.
+        data_pandas=pd.read_csv(path,skiprows=20,engine='python',header=None,delim_whitespace=True,skipfooter=2)
+        #Convert it to numpy array
+        data_array = data_pandas.values
+        #Reshape it from (174763, 6) to  (1048576)
+        data_array=np.reshape(data_array,[np.shape(data_array)[0]*np.shape(data_array)[1]])
+        #Remove nans (they come from number of values in each data columns:not the same length)
+        data_nan=~np.isnan(data_array)
+        data_array=data_array[data_nan]
+        return(data_array)
+    
 
 def extract_to_binary(shot='radial'):
 
@@ -62,7 +91,7 @@ def extract_to_binary(shot='radial'):
         for ip in np.arange(Np):
             for iR in np.arange(NR):
 
-                dat = read_rad_prof(iR,ip)
+                dat = read_pol_prof(iR,ip)
 
                 if ip==0 and iR==0:
                     Dat = np.zeros((Np, NR, dat.size)) # placeholder
