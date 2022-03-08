@@ -17,5 +17,8 @@ def statistical_properties(array):
     kurtosis_array = scstats.kurtosis(array)
     skew_array = scstats.skew(array)
     autocorr_array = scsignal.correlate(array, array)
-    
     return mean_array, kurtosis_array, skew_array, autocorr_array
+
+def find_nearest(a, val):
+    imin = np.argmin(np.abs(a - val))
+    return imin, a[imin]
