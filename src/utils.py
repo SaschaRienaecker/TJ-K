@@ -68,36 +68,9 @@ def find_nearest(a, val):
     imin = np.argmin(np.abs(a - val))
     return imin, a[imin]
 
-def pdf_rad(Dat):
-    """Histogram of the density fluctuations (probability density) for the different radii"""
-
-    for iR in range(R.size):
-        _Isat = normalized(Dat[1, iR, :])
-
-        hist, bin_edges = np.histogram(_Isat, bins=30, range=(-5,5))
-
-        if iR == 0:
-            Hist = np.zeros((R.size, *hist.shape))
-            Kurtosis = np.zeros(R.size)
-            Skew = np.zeros(R.size)
-
-
-        binw = bin_edges[1] - bin_edges[0]
-
-        # normalize
-        hist = hist / (np.sum(hist) * binw)
-
-        Hist[iR] = hist
-
-        bin_centers = bin_edges[1:] - binw/2
-
-        # pdf propoerties
-        _, Kurtosis[iR], Skew[iR], _ = statistical_properties(_Isat)
-
-    return bin_centers, Hist, Skew, Kurtosis
 
 def pdf_stat(Dat, shot='radial', itor=0):
-    """Histogram of the density fluctuations (probability density) for the different poloidal positions."""
+    """Histogram of the density fluctuations (probability density) for the different radial/poloidal positions."""
 
     if shot=='radial':
         Isat = normalized(Dat[1, :, :])
@@ -162,3 +135,28 @@ def plot_pdf(bin_centers, Hist, Skew, Kurtosis, shot='radial', axs=None):
         ax2.set_xticks([0, np.pi, 2 *np.pi])
         ax2.set_xticklabels(['$0$', '$\pi$', '$2\pi$'])
     # plt.tight_layout()
+
+def fluct_level(Dat, shot='poloidal', itor=0):
+    """
+    Returns the normalized density and potential fluctuations
+    for all radii/poloidal positions.
+    NOTE: Not implemented for radial shot yet.
+    """
+    if shot=='radial':
+        Isat = Dat[1, :, :]
+        phi  = Dat[0, :, :]
+        return
+
+    elif shot=='poloidal':
+        iPhi = np.arange(0,64, step=2, dtype=int)
+        phi = Dat[iPhi, itor]
+        iIsat = np.arange(1,64, step=2, dtype=int)
+        Isat = Dat[iIsat, itor]
+
+
+    Te = 9 # electron temperature in [eV] at probe tip position
+
+    dn = np.std(Isat, axis=-1) / np.mean(Isat, axis=-1) # relative density fluctuations
+    dphi = - np.std(phi, axis=-1) / np.mean(phi, axis=-1) / Te # relative potential fluctuations
+
+    return dn, dphi
