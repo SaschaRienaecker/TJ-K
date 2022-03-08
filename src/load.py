@@ -2,8 +2,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-import scipy.stats as scstats
-import scipy.signal as scsignal
+
 
 datap = Path('../data')
 
@@ -35,34 +34,30 @@ def read_rad_prof(rad_position, probe_nr):
         data_array=data_array[data_nan]
         return(data_array)
     
-def read_pol_prof(pol_position, probe_nr):
+def read_pol_prof(tor_pos, probe_nr):
     """
-    pol_position : index for the poloidal position of the probe. Must be an integer between  0 and 1.
-    probe_nr: index of the probe in the probe setup. Must be an integer between 0 and 63.
+    tor_pos : index of toroidal position. Must be 0 or 1.
+    probe_nr: index of the poloidal probe Must be between 0 and 63
     """
-    if probe_nr//2 == probe_nr/2:
-        ext = ".ufl"
-    else:
-        ext = ".isa"
+    ext = ".ufl" if probe_nr%2==0 else '.isa'
+
     if probe_nr%64 != probe_nr :
         print("Probe number must be between 0 and 63 depending on the probe we use : even nb are measuring potential and odd nb are measuring ion saturation current.")
         ext = 'NaN'
 
-    if ext != 'NaN':
-        # path= datap / str("20100216#006709/TJ-K20100216#006709pos00"+"%02d" % (rad_position,)+"_0"+str(probe_nr)+ext )
-        path = datap / "20100920#007192/TJ-K20100920#007192pos00{:02d}_{:02d}{}".format(pol_position,probe_nr,ext)
+    path = datap / "20100920#007192/TJ-K20100920#007192pos000{:d}_{:02d}{}".format(tor_pos,probe_nr,ext)
 
-        #Load measurements in a panda dataframe.
-        data_pandas=pd.read_csv(path,skiprows=20,engine='python',header=None,delim_whitespace=True,skipfooter=2)
-        #Convert it to numpy array
-        data_array = data_pandas.values
-        #Reshape it from (174763, 6) to  (1048576)
-        data_array=np.reshape(data_array,[np.shape(data_array)[0]*np.shape(data_array)[1]])
-        #Remove nans (they come from number of values in each data columns:not the same length)
-        data_nan=~np.isnan(data_array)
-        data_array=data_array[data_nan]
-        return(data_array)
-    
+    #Load measurements in a panda dataframe.
+    data_pandas=pd.read_csv(path,skiprows=20,engine='python',header=None,delim_whitespace=True,skipfooter=2)
+    #Convert it to numpy array
+    data_array = data_pandas.values
+    #Reshape it from (174763, 6) to  (1048576)
+    data_array=np.reshape(data_array,[np.shape(data_array)[0]*np.shape(data_array)[1]])
+    #Remove nans (they come from number of values in each data columns:not the same length)
+    data_nan=~np.isnan(data_array)
+    data_array=data_array[data_nan]
+    return(data_array)
+
 
 def extract_to_binary(shot='radial'):
 
@@ -83,53 +78,31 @@ def extract_to_binary(shot='radial'):
 
         p_binary = datap / '20100216#006709/dat.npy'
         np.save(p_binary, Dat)
-    elif shot == 'poloidal':
-        Np = 64    # number of probes
-        NR = 2   # number or radii
 
+    elif shot=='poloidal':
+
+        Np = 64
+        Nt = 2
 
         for ip in np.arange(Np):
-            for iR in np.arange(NR):
+            for it in np.arange(Nt):
+                dat = read_pol_prof(it,ip)
 
-                dat = read_pol_prof(iR,ip)
+                if ip==0 and it==0:
+                    Dat = np.zeros((Np, Nt, dat.size)) # placeholder
 
-                if ip==0 and iR==0:
-                    Dat = np.zeros((Np, NR, dat.size)) # placeholder
+                Dat[ip, it] = dat
 
-                Dat[ip, iR] = dat
 
         p_binary = datap / '20100920#007192/dat.npy'
         np.save(p_binary, Dat)
 
-def statistical_properties(array):
-    mean_array = np.mean(array)
-    kurtosis_array = scstats.kurtosis(array)
-    skew_array = scstats.skew(array)
-    autocorr_array = scsignal.correlate(array, array)
-    
-    return mean_array, kurtosis_array, skew_array, autocorr_array
-
-# def correlation_properties()
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def load_binary(shot='radial'):
+    if shot=='radial':
+        p_binary = datap / '20100920#007192/dat.npy'
+    elif shot=='poloidal':
+        p_binary = datap / '20100216#006709/dat.npy'
+    Dat = np.load(p_binary)
+    return Dat
 
 
