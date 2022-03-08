@@ -54,16 +54,24 @@ Bt_array_OPA    = np.array([81.413653,  81.554947, 81.688886, 81.785425,
 def normalized(a):
     return (a - a.mean() ) / a.std()
 
+<<<<<<< HEAD
 def fluctuations(a):
     return a - a.mean()
 
+=======
+>>>>>>> 2c3df1a974a6bff37bf385e116df7bddc5c64190
 def statistical_properties(array):
     mean_array = np.mean(array)
     kurtosis_array = scstats.kurtosis(array)
     skew_array = scstats.skew(array)
     autocorr_array = scsignal.correlate(array, array)
+<<<<<<< HEAD
 
     return mean_array, kurtosis_array, skew_array, autocorr_array
 
 # def correlation_properties()
 
+=======
+    
+    return mean_array, kurtosis_array, skew_array, autocorr_array
+>>>>>>> 2c3df1a974a6bff37bf385e116df7bddc5c64190

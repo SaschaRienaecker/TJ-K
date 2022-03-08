@@ -58,7 +58,6 @@ def read_pol_prof(tor_pos, probe_nr):
     data_array=data_array[data_nan]
     return(data_array)
 
-
 def extract_to_binary(shot='radial'):
 
     if shot=='radial':
@@ -93,15 +92,14 @@ def extract_to_binary(shot='radial'):
 
                 Dat[ip, it] = dat
 
-
         p_binary = datap / '20100920#007192/dat.npy'
         np.save(p_binary, Dat)
 
 def load_binary(shot='radial'):
     if shot=='radial':
-        p_binary = datap / '20100920#007192/dat.npy'
-    elif shot=='poloidal':
         p_binary = datap / '20100216#006709/dat.npy'
+    elif shot=='poloidal':
+        p_binary = datap / '20100920#007192/dat.npy'
     Dat = np.load(p_binary)
     return Dat
 
