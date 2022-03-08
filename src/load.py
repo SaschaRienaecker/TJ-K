@@ -33,13 +33,17 @@ def read_rad_prof(rad_position, probe_nr):
         data_nan=~np.isnan(data_array)
         data_array=data_array[data_nan]
         return(data_array)
-
+    
 def read_pol_prof(tor_pos, probe_nr):
     """
     tor_pos : index of toroidal position. Must be 0 or 1.
     probe_nr: index of the poloidal probe Must be between 0 and 63
     """
     ext = ".ufl" if probe_nr%2==0 else '.isa'
+
+    if probe_nr%64 != probe_nr :
+        print("Probe number must be between 0 and 63 depending on the probe we use : even nb are measuring potential and odd nb are measuring ion saturation current.")
+        ext = 'NaN'
 
     path = datap / "20100920#007192/TJ-K20100920#007192pos000{:d}_{:02d}{}".format(tor_pos,probe_nr,ext)
 
@@ -81,7 +85,6 @@ def extract_to_binary(shot='radial'):
 
         for ip in np.arange(Np):
             for it in np.arange(Nt):
-
                 dat = read_pol_prof(it,ip)
 
                 if ip==0 and it==0:
@@ -99,3 +102,5 @@ def load_binary(shot='radial'):
         p_binary = datap / '20100920#007192/dat.npy'
     Dat = np.load(p_binary)
     return Dat
+
+

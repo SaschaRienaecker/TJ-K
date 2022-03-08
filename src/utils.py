@@ -12,10 +12,21 @@ dZ = 5e-3 # vertical dist. between probes [m]
 def normalized(a):
     return (a - a.mean() ) / a.std()
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 3f699f5f156a7a35392c79758e411a854dea852b
 def statistical_properties(array):
     mean_array = np.mean(array)
     kurtosis_array = scstats.kurtosis(array)
     skew_array = scstats.skew(array)
     autocorr_array = scsignal.correlate(array, array)
+<<<<<<< HEAD
+    
+    return mean_array, kurtosis_array, skew_array, autocorr_array
+
+# def correlation_properties()
+=======
 
     return mean_array, kurtosis_array, skew_array, autocorr_array
+>>>>>>> 3f699f5f156a7a35392c79758e411a854dea852b
