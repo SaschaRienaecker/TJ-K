@@ -22,7 +22,7 @@ l  = -1.5e-2 #distance to the separatrix
 Bt = -72e-3 #mean magnetic field for now [T]
 
 # Angle for each probe [rad]
-theta_array_OPA = np.array([-3.1235280, -3.0137569, -2.9073485, -2.8051417, 
+theta_array_OPA = np.array([-3.1235280, -3.0137569, -2.9073485, -2.8051417,
 -2.7071847, -2.6126248, -2.5215145, -2.4330854, -2.3478083, -2.2648591,
 -2.1842471, -2.1040693, -2.0234246, -1.9421344, -1.8614906, -1.7821543,
 -1.7024737, -1.6212623, -1.5376113, -1.4496697, -1.3572263, -1.2596373,
@@ -54,24 +54,15 @@ Bt_array_OPA    = np.array([81.413653,  81.554947, 81.688886, 81.785425,
 def normalized(a):
     return (a - a.mean() ) / a.std()
 
-<<<<<<< HEAD
 def fluctuations(a):
     return a - a.mean()
 
-=======
->>>>>>> 2c3df1a974a6bff37bf385e116df7bddc5c64190
 def statistical_properties(array):
     mean_array = np.mean(array)
     kurtosis_array = scstats.kurtosis(array)
     skew_array = scstats.skew(array)
     autocorr_array = scsignal.correlate(array, array)
-<<<<<<< HEAD
 
     return mean_array, kurtosis_array, skew_array, autocorr_array
 
 # def correlation_properties()
-
-=======
-    
-    return mean_array, kurtosis_array, skew_array, autocorr_array
->>>>>>> 2c3df1a974a6bff37bf385e116df7bddc5c64190
