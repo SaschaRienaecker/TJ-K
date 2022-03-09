@@ -1,5 +1,6 @@
 """ Utility functions shared """
 import numpy as np
+from numpy import pi
 import scipy.stats as scstats
 import scipy.signal as scsignal
 import matplotlib.pyplot as plt
@@ -17,7 +18,7 @@ dZ = 5e-3 # vertical dist. between probes [m]
 dX = 8e-3 # distance between two successive probes [m]
 dx_pol = 8e-3 # polidal distance between adjacent probes
 X_theta = np.arange(64) * dx_pol # poloidal positions array
-Theta = np.linspace(0, 2*np.pi, 64, endpoint=False)
+Theta = np.linspace(0, 2*np.pi, 64, endpoint=False) - np.pi
 l  = -1.5e-2 #distance to the separatrix
 Bt = 72e-3 #mean magnetic field for now [T]
 
@@ -115,21 +116,29 @@ def plot_pdf(bin_centers, Hist, Skew, Kurtosis, shot='radial', axs=None):
         x = Theta[iIsat]
         xlab = r'poloidal angle $\theta$ [rad]'
 
-    #bin_center = np.hstack([ bin_edges, [bin_edges[-1] + binw]]) - binw / 2
-    for hist in Hist:
-        ax.plot(bin_centers, hist, alpha=0.2, color='black')
+    # for hist in Hist:
+        # ax.plot(bin_centers, hist, alpha=0.2, color='black')
+    imax_kurt = np.argmax(Kurtosis)
+    ax.plot(bin_centers, Hist[imax_kurt], alpha=0.5, label='max. Kurt', color='red')
+    imin_kurt = np.argmin(Kurtosis)
+    ax.plot(bin_centers, Hist[imin_kurt], alpha=0.5, label='min. Kurt', color='blue')
 
-    ax.plot(bin_centers, np.mean(Hist, axis=0), ls='--', color='black')
-    ax.set_xlabel(r'$\tilde{I}$ [$\sigma_\tilde{I}$]')
+    ax.plot(bin_centers, np.mean(Hist, axis=0), ls='--', color='black', label=r'$\theta$-average')
+    ax.set_xlabel(r'$\tilde{I}$ [$\sigma_I$]')
     ax.set_ylabel(r'probab. density $\tilde{I}$')
+    ax.legend(handlelength=1.0, loc='upper left')
+    ax.set_xlim(left=-12)
 
     ax2.plot(x, Kurtosis, label=r'Kurt [$\tilde{I}$]')
     ax2.plot(x, Skew, label=r'Skew [$\tilde{I}$]')
     ax2.set_xlabel(xlab)
     ax2.legend(frameon=False)
+    ax2.plot(x[imax_kurt], Kurtosis[imax_kurt], 'ro', ms=4)
+    ax2.plot(x[imin_kurt], Kurtosis[imin_kurt], 'bo', ms=4)
     if shot=='poloidal':
-        ax2.set_xticks([0, np.pi, 2 *np.pi])
-        ax2.set_xticklabels(['$0$', '$\pi$', '$2\pi$'])
+        annot_poloidal_xaxis(ax2)
+        # ax2.set_xticks([0, np.pi, 2 *np.pi])
+        # ax2.set_xticklabels(['$0$', '$\pi$', '$2\pi$'])
     # plt.tight_layout()
 
 def fluct_level(Dat, shot='poloidal', itor=0):
@@ -141,7 +150,6 @@ def fluct_level(Dat, shot='poloidal', itor=0):
     if shot=='radial':
         Isat = Dat[1, :, :]
         phi  = Dat[0, :, :]
-        return
 
     elif shot=='poloidal':
         iPhi = np.arange(0,64, step=2, dtype=int)
@@ -152,8 +160,8 @@ def fluct_level(Dat, shot='poloidal', itor=0):
 
     Te = 9 # electron temperature in [eV] at probe tip position
 
-    dn = np.std(Isat, axis=-1) / np.mean(Isat, axis=-1) # relative density fluctuations
-    dphi = - np.std(phi, axis=-1) / np.mean(phi, axis=-1) / Te # relative potential fluctuations
+    dn = np.std(Isat , axis=-1) / np.mean(Isat) # relative density fluctuations
+    dphi = - np.std(phi, axis=-1) / np.mean(phi) # potential fluctuations in [V]
 
     return dn, dphi
 
