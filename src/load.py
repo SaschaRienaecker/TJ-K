@@ -33,7 +33,7 @@ def read_rad_prof(rad_position, probe_nr):
         data_nan=~np.isnan(data_array)
         data_array=data_array[data_nan]
         return(data_array)
-    
+
 def read_pol_prof(tor_pos, probe_nr):
     """
     tor_pos : index of toroidal position. Must be 0 or 1.
@@ -102,5 +102,3 @@ def load_binary(shot='radial'):
         p_binary = datap / '20100920#007192/dat.npy'
     Dat = np.load(p_binary)
     return Dat
-
-
