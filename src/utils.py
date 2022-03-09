@@ -1,4 +1,4 @@
--not""" Utility functions shared """
+""" Utility functions shared """
 import numpy as np
 import scipy.stats as scstats
 import scipy.signal as scsignal
@@ -19,7 +19,7 @@ dx_pol = 8e-3 # polidal distance between adjacent probes
 X_theta = np.arange(64) * dx_pol # poloidal positions array
 Theta = np.linspace(0, 2*np.pi, 64, endpoint=False)
 l  = -1.5e-2 #distance to the separatrix
-Bt = -72e-3 #mean magnetic field for now [T]
+Bt = 72e-3 #mean magnetic field for now [T]
 
 # Angle for each probe [rad]
 theta_array_OPA = np.array([-3.1235280, -3.0137569, -2.9073485, -2.8051417,
@@ -156,3 +156,82 @@ def fluct_level(Dat, shot='poloidal', itor=0):
     dphi = - np.std(phi, axis=-1) / np.mean(phi, axis=-1) / Te # relative potential fluctuations
 
     return dn, dphi
+
+# Blobs functions
+
+# Gives the position of each value beyond alpha*sigma in absolute value
+# Warning : normalized array needed
+def blobholes(normalized_array, alpha = 2.3):
+    indice = np.where(abs(normalized_array) >= alpha)[0]
+    indiceblob = []
+    indicehole = []
+    for i in indice:
+        if normalized_array[i]>0:
+            indiceblob.append(i)
+        else:
+            indicehole.append(i)
+    return indiceblob, indicehole
+
+# Reduces the number of positions in order to take into account a time windowing
+# This means that each blob/hole is referenced by a unique position (its center)
+# The list of indices can be either blobs or holes
+def blobhole_windowing(indices, window = window):
+    l = [[indices[0]]]
+    for i in indices[1:]:
+        if i - l[-1][0] < 2*window :
+            l[-1].append(i)
+        else:
+            l.append([i])
+    n = len(l)
+    windowed_indices = np.zeros(n, dtype = int)
+    for j in range(n):
+        windowed_indices[j] = int((l[j][-1]+ l[j][0])//2)
+    return windowed_indices
+
+# Computes the average over every bolb/hole of the profile over time (mean evolution over time).
+# If f_i is the time profile for blob nb i, it returns 1/N \sum f_i
+def blobholes_meanprof(normalized_array, windices, window = window):
+    #averaging blob/hole
+    mean_profile = np.zeros(2*window)
+
+    for i in windices:
+        mean_profile += normalized_array[ i- window : i + window]
+
+    mean_profile /= len(windices)
+    return mean_profile
+
+# Computes the average over smaller groups of blobs (e.g. 10 by 10) of the profile
+# if (i1_1, ... i1_10, i2_1,...i2_10,...,in_10) characterizes each blob, then
+# it returns multiple profiles 1/10 \sum_j f_i1_j,..., 1/10 \sum_j f_in_10
+def blobholes_local_meanprof(normalized_array, windices, averaging_nb = averaging_nb):
+    #averaging blob/hole but only over a few pics
+    nb_profiles = len(windices)//averaging_nb
+
+    mean_profiles = np.zeros((nb_profiles, 2*window))
+
+    compteur = 0
+    m = 0
+    while compteur < len(windices) and m < nb_profiles:
+        somme = 0
+        while somme <= averaging_nb:
+            somme += 1
+            i = windices[compteur]
+            mean_profiles[m] += normalized_array[ i- window : i + window]/averaging_nb
+        compteur += 1
+        m +=1
+        return mean_profiles
+"""
+These lines of command work provided you have the set of data datr_norm
+
+datr_norm = normalized(Datr[0, 0])
+Isat_norm = normalized(Datr[1, 0])
+
+indiceblob, indicehole = blobholes(datr_norm)
+
+windiceblob = blobhole_windowing(indiceblob)
+
+phi_meanprof = blobholes_meanprof(datr_norm, windiceblob)
+Isat_meanprof = blobholes_meanprof(Isat_norm, windiceblob)
+phi_mean_profiles = blobholes_local_meanprof(datr_norm, windiceblob)
+phi_mean_profiles.shape
+"""
