@@ -120,18 +120,25 @@ def plot_pdf(bin_centers, Hist, Skew, Kurtosis, shot='radial', axs=None):
         x = Theta[iIsat]
         xlab = r'poloidal angle $\theta$ [rad]'
 
-    #bin_center = np.hstack([ bin_edges, [bin_edges[-1] + binw]]) - binw / 2
-    for hist in Hist:
-        ax.plot(bin_centers, hist, alpha=0.2, color='black')
+    # for hist in Hist:
+        # ax.plot(bin_centers, hist, alpha=0.2, color='black')
+    imax_kurt = np.argmax(Kurtosis)
+    ax.plot(bin_centers, Hist[imax_kurt], alpha=0.5, label='max. Kurt', color='red')
+    imin_kurt = np.argmin(Kurtosis)
+    ax.plot(bin_centers, Hist[imin_kurt], alpha=0.5, label='min. Kurt', color='blue')
 
-    ax.plot(bin_centers, np.mean(Hist, axis=0), ls='--', color='black')
-    ax.set_xlabel(r'$\tilde{I}$ [$\sigma_\tilde{I}$]')
+    ax.plot(bin_centers, np.mean(Hist, axis=0), ls='--', color='black', label=r'$\theta$-average')
+    ax.set_xlabel(r'$\tilde{I}$ [$\sigma_I$]')
     ax.set_ylabel(r'probab. density $\tilde{I}$')
+    ax.legend(handlelength=1.0, loc='upper left')
+    ax.set_xlim(left=-12)
 
     ax2.plot(x, Kurtosis, label=r'Kurt [$\tilde{I}$]')
     ax2.plot(x, Skew, label=r'Skew [$\tilde{I}$]')
     ax2.set_xlabel(xlab)
     ax2.legend(frameon=False)
+    ax2.plot(x[imax_kurt], Kurtosis[imax_kurt], 'ro', ms=4)
+    ax2.plot(x[imin_kurt], Kurtosis[imin_kurt], 'bo', ms=4)
     if shot=='poloidal':
         annot_poloidal_xaxis(ax2)
         # ax2.set_xticks([0, np.pi, 2 *np.pi])
@@ -182,3 +189,27 @@ def annot_poloidal_xaxis(ax, label=True, LFS=True, HFS=True):
     # ax.set_xticklabels(['$0$', '$\pi/2$', '$\pi$', '$3\pi/2$', '$2\pi$'])
     if label:
         ax.set_xlabel(r'$\theta$ [rad]')
+
+def plot_v_pol(CrossCorr_phi, CrossCorr_I, ax=None):
+
+    labels = [r'$\tilde{\phi}$', r'$\tilde{I}$']
+    iPhi = np.arange(0,64, step=2, dtype=int)
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    for i, CCorr in enumerate([CrossCorr_phi, CrossCorr_I]):
+        tau_max = CCorr[:,2]
+        max_corr = CCorr[:,3]
+
+        # remove outliers
+        #print(tau_max)
+        itake = (np.abs(tau_max) > 1e-6) & (max_corr > 0.4)
+        vfluct = - 2 * dx_pol / tau_max[itake]
+
+        ax.plot(theta_array_OPA[iPhi][itake], vfluct * 1e-3, 'x-', label=labels[i])
+        ax.set_ylabel(r'$v_\theta$ [km/s]')
+        ax.axhline(0, ls='--', alpha=0.6, color='black')
+
+    ax.legend()
+    annot_poloidal_xaxis(ax)

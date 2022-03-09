@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import welch, csd, correlate, coherence
 from scipy.signal import correlation_lags # Note: requires a recent version of SciPy
-from utils import R, dt, NR, Z, dZ, normalized
+from utils import R, dt, NR, Z, dZ, normalized, theta_array_OPA, annot_poloidal_xaxis
 
 dt = 1e-6 # sampling time in [s]
 nperseg = 4 * 1024
@@ -124,7 +124,7 @@ def adjacent_Corr(Dat, quantity='phi', threshold=np.exp(-1), itor=0):
 
     return Corr
 
-def plot_spec(Spec, f, ax=None, cbar=True, angle=False):
+def plot_spec(Spec, f, ax=None, cbar=True, angle=False, shot='radial'):
     """Just a convenience function for plotting"""
     if ax is None:
         fig, ax = plt.subplots()
@@ -134,11 +134,22 @@ def plot_spec(Spec, f, ax=None, cbar=True, angle=False):
     Z = Spec / Spec.max()
     if angle:
         Z = Spec
-    im = ax.imshow(Z, aspect='auto', extent=[0, f.max()/1e3, R.min(), R.max()], origin='lower')
 
-    ax.set_xlabel('$f$ [kHz]')
-    ax.set_ylabel('$(r-a)$ [mm]')
-    ax.set_xlim(right=20)
+    if shot=='radial':
+        ext = [0, f.max()/1e3, R.min(), R.max()]
+        ax.set_ylabel('$(r-a)$ [mm]')
+        ax.set_xlabel('$f$ [kHz]')
+        ax.set_xlim(right=20)
+    elif shot=='poloidal':
+        ext = [theta_array_OPA.min(), theta_array_OPA.max(), 0, f.max()/1e3]
+        annot_poloidal_xaxis(ax)
+        ax.set_ylabel('$f$ [kHz]')
+        ax.set_ylim(top=20)
+        Z = Z.T
+
+    im = ax.imshow(Z, aspect='auto', extent=ext, origin='lower')
+    return im
+
 
     if cbar:
         lab = 'PSD [a.u.]' if not angle else 'angle [rad]'
@@ -157,6 +168,7 @@ def get_kspec(Dat, quantity='phi', itor=0, it_step=10):
     Isat = Dat[iIsat]
 
     Q = Phi if quantity=='phi' else Isat
+    Q = normalized(Q)
 
     # select some time frames
     it_select = np.arange(start=0, stop=Q.shape[-1], step=it_step)

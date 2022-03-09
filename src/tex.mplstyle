@@ -2,7 +2,7 @@ text.usetex: True
 font.family: serif
 axes.labelsize: 13
 font.size: 12
-legend.fontsize: 12
+legend.fontsize: 11
 legend.frameon: False
 xtick.labelsize: 10
 ytick.labelsize: 10
