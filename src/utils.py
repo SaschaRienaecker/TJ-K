@@ -145,7 +145,6 @@ def fluct_level(Dat, shot='poloidal', itor=0):
     if shot=='radial':
         Isat = Dat[1, :, :]
         phi  = Dat[0, :, :]
-        return
 
     elif shot=='poloidal':
         iPhi = np.arange(0,64, step=2, dtype=int)
@@ -156,7 +155,7 @@ def fluct_level(Dat, shot='poloidal', itor=0):
 
     Te = 9 # electron temperature in [eV] at probe tip position
 
-    dn = np.std(Isat, axis=-1) / np.mean(Isat, axis=-1) # relative density fluctuations
+    dn = np.std(Isat , axis=-1) / np.mean(Isat, axis=-1) # relative density fluctuations
     dphi = - np.std(phi, axis=-1) / np.mean(phi, axis=-1) / Te # relative potential fluctuations
 
     return dn, dphi
