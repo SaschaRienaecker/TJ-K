@@ -7,9 +7,13 @@ from utils import R, dt, NR, Z, dZ, normalized
 
 dt = 1e-6 # sampling time in [s]
 nperseg = 4 * 1024
+dx_pol = 8e-3 # polidal distance between adjacent probes
+Theta = np.linspace(0, 2*np.pi, 64, endpoint=False)
+X_theta = np.arange(64) * dx_pol
+
 
 def get_tau_corr(tau, corr, threshold=np.exp(-1)):
-
+    """Return tau at 1/e width (left and right value) of the correlation maximum."""
     ip = tau > 0
     tau_p = tau[ip]
     itau_c_p = np.argmin(np.abs(corr[ip] - corr.max() * threshold ))
@@ -43,8 +47,59 @@ def Corr_profile(Dat, ip1, ip2, threshold=np.exp(-1)):
 
     return Corr
 
-def plot_spec(Spec, f, ax=None, cbar=True, angle=False):
+def adjacent_Corr(Dat, quantity='phi', threshold=np.exp(-1), itor=0):
+    """
+    Returns for each radial position the left and right 1/e time delay,
+    the time corresponding to the correlation maximum and the correlation value at that maximum.
+    """
 
+    iPhi = np.arange(0,64, step=2, dtype=int)
+    Phi = Dat[iPhi]
+    iIsat = np.arange(1,64, step=2, dtype=int)
+    Isat = Dat[iIsat]
+
+    E = -(Phi - np.roll(Phi, -1, axis=0)) / (2 * dx_pol)
+
+
+    if quantity=='phi':
+        Q = Phi
+    elif quantity=='I':
+        Q = Isat
+    elif quantity=='E_I':
+        Q = E
+    elif quantity=='phi_I':
+        Q = Phi
+
+    Corr = np.zeros((Q.shape[0],4))
+
+    for i in range(Q.shape[0]):
+
+        dat1 = normalized(Q[i,itor])
+
+        if quantity=='E_I':
+            dat2 = normalized(Isat[i, itor])
+        elif quantity=='phi_I':
+            dat2 = normalized(Isat[i, itor])
+        else:
+            if i==Q.shape[0]-1:
+                i2 = 0
+            else:
+                i2 = i+1
+
+            dat2 = normalized(Q[i2, itor])
+
+        corr = correlate(dat1, dat2, method='fft') / dat1.size
+        lags = correlation_lags(dat1.size, dat2.size)
+        tau = lags * dt
+
+        Corr[i,:2] = get_tau_corr(tau, corr, threshold)
+        Corr[i, 2] = tau[np.argmax(corr)]
+        Corr[i, 3] = np.max(corr)
+
+    return Corr
+
+def plot_spec(Spec, f, ax=None, cbar=True, angle=False):
+    """Just a convenience function for plotting"""
     if ax is None:
         fig, ax = plt.subplots()
     else:
@@ -62,3 +117,32 @@ def plot_spec(Spec, f, ax=None, cbar=True, angle=False):
     if cbar:
         lab = 'PSD [a.u.]' if not angle else 'angle [rad]'
         fig.colorbar(im, ax=ax, label=lab)
+
+def get_kspec(Dat, quantity='phi', itor=0, it_step=10):
+    """
+
+    """
+    from numpy.fft import fft, fftfreq, fftshift
+    dx_pol = 8e-3
+
+    iPhi = np.arange(0,64, step=2, dtype=int)
+    Phi = Dat[iPhi]
+    iIsat = np.arange(1,64, step=2, dtype=int)
+    Isat = Dat[iIsat]
+
+    Q = Phi if quantity=='phi' else Isat
+
+    # select some time frames
+    it_select = np.arange(start=0, stop=Q.shape[-1], step=it_step)
+
+    for i, it in enumerate(it_select):
+        kspec = fft(Q[:, itor, it])
+
+        if i == 0:
+            kth = 2 * np.pi * np.fft.fftfreq(Q.shape[0], d=2 * dx_pol)
+            kth =  np.fft.fftshift(kth)
+            Kspec = np.zeros((it_select.size, *kspec.shape), dtype='complex')
+
+        kspec = np.fft.fftshift(kspec)
+        Kspec[i] = kspec
+    return kth, Kspec
