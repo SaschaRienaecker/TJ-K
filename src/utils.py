@@ -20,7 +20,7 @@ dx_pol = 8e-3 # polidal distance between adjacent probes
 X_theta = np.arange(64) * dx_pol # poloidal positions array
 Theta = np.linspace(0, 2*np.pi, 64, endpoint=False) - np.pi
 l  = -1.5e-2 #distance to the separatrix
-Bt = 72e-3 #mean magnetic field for now [T]
+Bt = -72e-3 #mean magnetic field for now [T]
 
 # Angle for each probe [rad]
 theta_array_OPA = np.array([-3.1235280, -3.0137569, -2.9073485, -2.8051417,
@@ -46,6 +46,10 @@ Bt_array_OPA    = np.array([81.413653,  81.554947, 81.688886, 81.785425,
 64.012493, 65.972022, 68.033278, 70.161485, 72.300145, 74.362368, 76.264515,
 77.940651, 79.336531, 80.374150, 81.064533,  81.410054, 81.525579, 81.490495,
 81.405933, 81.336058, 81.291581, 81.331378])*10**(-3)
+
+
+
+
 
 
 def normalized(a):
@@ -165,6 +169,51 @@ def fluct_level(Dat, shot='poloidal', itor=0):
 
     return dn, dphi
 
+def annot_poloidal_xaxis(ax, label=True, LFS=True, HFS=True):
+    ax.set_xticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
+
+    if LFS:
+        null_lab = '$0$\n(LFS)'
+    else:
+        null_lab = '$0$'
+
+    if HFS:
+        neg_pilab = '$-\pi$\n(HFS)'
+        pos_pilab = '$\pi$\n(HFS)'
+    else:
+        neg_pilab = '$-\pi$'
+        pos_pilab = '$\pi$'
+
+    ax.set_xticklabels([neg_pilab, '$-\pi/2$', null_lab, '$\pi/2$', pos_pilab])
+
+    # ax.set_xticklabels(['$0$', '$\pi/2$', '$\pi$', '$3\pi/2$', '$2\pi$'])
+    if label:
+        ax.set_xlabel(r'$\theta$ [rad]')
+
+def plot_v_pol(CrossCorr_phi, CrossCorr_I, ax=None):
+
+    labels = [r'$\tilde{\phi}$', r'$\tilde{I}$']
+    iPhi = np.arange(0,64, step=2, dtype=int)
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    for i, CCorr in enumerate([CrossCorr_phi, CrossCorr_I]):
+        tau_max = CCorr[:,2]
+        max_corr = CCorr[:,3]
+
+        # remove outliers
+        #print(tau_max)
+        itake = (np.abs(tau_max) > 1e-6) & (max_corr > 0.4)
+        vfluct = - 2 * dx_pol / tau_max[itake]
+
+        ax.plot(theta_array_OPA[iPhi][itake], vfluct * 1e-3, 'x-', label=labels[i])
+        ax.set_ylabel(r'$v_\theta$ [km/s]')
+        ax.axhline(0, ls='--', alpha=0.6, color='black')
+
+    ax.legend()
+    annot_poloidal_xaxis(ax)
+
 # Blobs functions
 
 # Gives the position of each value beyond alpha*sigma in absolute value
@@ -183,7 +232,7 @@ def blobholes(normalized_array, alpha = 2.3):
 # Reduces the number of positions in order to take into account a time windowing
 # This means that each blob/hole is referenced by a unique position (its center)
 # The list of indices can be either blobs or holes
-def blobhole_windowing(indices, window = window):
+def blobhole_windowing(indices, window = 100):
     l = [[indices[0]]]
     for i in indices[1:]:
         if i - l[-1][0] < 2*window :
@@ -198,6 +247,9 @@ def blobhole_windowing(indices, window = window):
 
 # Computes the average over every bolb/hole of the profile over time (mean evolution over time).
 # If f_i is the time profile for blob nb i, it returns 1/N \sum f_i
+window = 500
+averaging_nb = 10
+
 def blobholes_meanprof(normalized_array, windices, window = window):
     #averaging blob/hole
     mean_profile = np.zeros(2*window)
@@ -243,3 +295,4 @@ Isat_meanprof = blobholes_meanprof(Isat_norm, windiceblob)
 phi_mean_profiles = blobholes_local_meanprof(datr_norm, windiceblob)
 phi_mean_profiles.shape
 """
+
