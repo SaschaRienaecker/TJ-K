@@ -1,5 +1,6 @@
 """ Utility functions shared """
 import numpy as np
+from numpy import pi
 import scipy.stats as scstats
 import scipy.signal as scsignal
 import matplotlib.pyplot as plt
@@ -17,7 +18,7 @@ dZ = 5e-3 # vertical dist. between probes [m]
 dX = 8e-3 # distance between two successive probes [m]
 dx_pol = 8e-3 # polidal distance between adjacent probes
 X_theta = np.arange(64) * dx_pol # poloidal positions array
-Theta = np.linspace(0, 2*np.pi, 64, endpoint=False)
+Theta = np.linspace(0, 2*np.pi, 64, endpoint=False) - np.pi
 l  = -1.5e-2 #distance to the separatrix
 Bt = -72e-3 #mean magnetic field for now [T]
 
@@ -132,8 +133,9 @@ def plot_pdf(bin_centers, Hist, Skew, Kurtosis, shot='radial', axs=None):
     ax2.set_xlabel(xlab)
     ax2.legend(frameon=False)
     if shot=='poloidal':
-        ax2.set_xticks([0, np.pi, 2 *np.pi])
-        ax2.set_xticklabels(['$0$', '$\pi$', '$2\pi$'])
+        annot_poloidal_xaxis(ax2)
+        # ax2.set_xticks([0, np.pi, 2 *np.pi])
+        # ax2.set_xticklabels(['$0$', '$\pi$', '$2\pi$'])
     # plt.tight_layout()
 
 def fluct_level(Dat, shot='poloidal', itor=0):
@@ -155,7 +157,28 @@ def fluct_level(Dat, shot='poloidal', itor=0):
 
     Te = 9 # electron temperature in [eV] at probe tip position
 
-    dn = np.std(Isat , axis=-1) / np.mean(Isat, axis=-1) # relative density fluctuations
-    dphi = - np.std(phi, axis=-1) / np.mean(phi, axis=-1) / Te # relative potential fluctuations
+    dn = np.std(Isat , axis=-1) / np.mean(Isat) # relative density fluctuations
+    dphi = - np.std(phi, axis=-1) / np.mean(phi) # potential fluctuations in [V]
 
     return dn, dphi
+
+def annot_poloidal_xaxis(ax, label=True, LFS=True, HFS=True):
+    ax.set_xticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
+
+    if LFS:
+        null_lab = '$0$\n(LFS)'
+    else:
+        null_lab = '$0$'
+
+    if HFS:
+        neg_pilab = '$-\pi$\n(HFS)'
+        pos_pilab = '$\pi$\n(HFS)'
+    else:
+        neg_pilab = '$-\pi$'
+        pos_pilab = '$\pi$'
+
+    ax.set_xticklabels([neg_pilab, '$-\pi/2$', null_lab, '$\pi/2$', pos_pilab])
+
+    # ax.set_xticklabels(['$0$', '$\pi/2$', '$\pi$', '$3\pi/2$', '$2\pi$'])
+    if label:
+        ax.set_xlabel(r'$\theta$ [rad]')

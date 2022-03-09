@@ -8,7 +8,7 @@ from utils import R, dt, NR, Z, dZ, normalized
 dt = 1e-6 # sampling time in [s]
 nperseg = 4 * 1024
 dx_pol = 8e-3 # polidal distance between adjacent probes
-Theta = np.linspace(0, 2*np.pi, 64, endpoint=False)
+Theta = np.linspace(0, 2*np.pi, 64, endpoint=False) - np.pi
 X_theta = np.arange(64) * dx_pol
 
 
@@ -44,6 +44,32 @@ def Corr_profile(Dat, ip1, ip2, threshold=np.exp(-1)):
         Corr[iR,:2] = get_tau_corr(tau, corr, threshold)
         Corr[iR, 2] = tau[np.argmax(corr)]
         Corr[iR, 3] = np.max(corr)
+
+    return Corr
+
+def Corr_profile_poloidal(Dat, quantity='phi', itor=0, threshold=np.exp(-1)):
+    """
+    Returns for each poloidal position the left and right 1/e time delay,
+    the time corresponding to the auto-correlation maximum and the correlation value at that maximum.
+    """
+    iPhi = np.arange(0,64, step=2, dtype=int)
+    Phi = Dat[iPhi, itor]
+    iIsat = np.arange(1,64, step=2, dtype=int)
+    Isat = Dat[iIsat, itor]
+
+    Q = Phi if quantity=='phi' else Isat
+    Npol = Q.shape[0]
+
+    Corr = np.zeros((Npol,4))
+    for i in range(Npol):
+        dat = normalized(Q[i])
+        corr = correlate(dat, dat, method='fft') / dat.size
+        lags = correlation_lags(dat.size, dat.size)
+        tau = lags * dt
+
+        Corr[i,:2] = get_tau_corr(tau, corr, threshold)
+        Corr[i, 2] = tau[np.argmax(corr)]
+        Corr[i, 3] = np.max(corr)
 
     return Corr
 
