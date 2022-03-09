@@ -2,6 +2,7 @@ overleaf
 data
 literature
 
+notebooks
 *.pdf
 
 # ignore data files
