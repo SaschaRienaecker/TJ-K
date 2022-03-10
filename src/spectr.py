@@ -124,7 +124,7 @@ def adjacent_Corr(Dat, quantity='phi', threshold=np.exp(-1), itor=0):
 
     return Corr
 
-def plot_spec(Spec, f, ax=None, cbar=True, angle=False, shot='radial'):
+def plot_spec(Spec, f, ax=None, cbar=True, angle=False, shot='radial', lognorm=False, vmin=1e-3, vmax=1):
     """Just a convenience function for plotting"""
     if ax is None:
         fig, ax = plt.subplots()
@@ -147,7 +147,12 @@ def plot_spec(Spec, f, ax=None, cbar=True, angle=False, shot='radial'):
         ax.set_ylim(top=20)
         Z = Z.T
 
-    im = ax.imshow(Z, aspect='auto', extent=ext, origin='lower')
+    if lognorm:
+        from matplotlib.colors import LogNorm
+        norm=LogNorm(vmin, vmax)
+        im = ax.imshow(Z, aspect='auto', extent=ext, origin='lower', norm=norm)
+    else:
+        im = ax.imshow(Z, aspect='auto', extent=ext, origin='lower')
     return im
 
 
@@ -167,8 +172,15 @@ def get_kspec(Dat, quantity='phi', itor=0, it_step=10):
     iIsat = np.arange(1,64, step=2, dtype=int)
     Isat = Dat[iIsat]
 
+    Isat_m = np.mean(Isat[:,itor,:], axis=-1)
+    itake = Isat_m > 1
+    Isat[itake] = 0
+
+
     Q = Phi if quantity=='phi' else Isat
-    Q = normalized(Q)
+    # Q = normalized(Q)
+
+
 
     # select some time frames
     it_select = np.arange(start=0, stop=Q.shape[-1], step=it_step)
